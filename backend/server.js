@@ -12,7 +12,7 @@ import pr from './routes/product.js';
 import payment from './routes/payment.js';
 import orderRoutes from './routes/order.js';
 import reviewRoutes from './routes/review.js';
-import adminRoutes from "./routes/admin.js";
+import adminRoutes from "./routes/Admin.js";
 import couponsRoutes from "./routes/coupons.js";
 const PORT = process.env.PORT || 5000;
 
