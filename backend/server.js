@@ -4,8 +4,10 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 
+// Load environment variables
 dotenv.config();
 
+// Import Routes & Middleware
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.js";
 import productRoutes from "./routes/productAdmin.js";
@@ -21,7 +23,8 @@ import couponsRoutes from "./routes/coupons.js";
 const PORT = process.env.PORT || 5000;
 const app = express();
 
-// ✅ Required for ES Modules (important on Render)
+// ✅ FIX FOR ES MODULES: Define __dirname manually
+// This ensures path.join works correctly on Render
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -29,10 +32,11 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database
+// Database Connection
 connectDB();
 
-// CORS
+// CORS Configuration
+// Ensure process.env.CLIENT_URL is set to your Render frontend URL
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
@@ -40,7 +44,8 @@ app.use(
   })
 );
 
-// ✅ FIXED STATIC FILES (IMPORTANT FOR RENDER)
+// ✅ SERVE STATIC FILES
+// This allows your frontend to access images stored in the uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Test Route
@@ -48,13 +53,15 @@ app.get("/", (req, res) => {
   res.send("Backend Running ✅");
 });
 
-// Routes
+// --- API Routes ---
+
+// Authentication
 app.use("/api/users", authRoutes);
 
-// Public Product Routes
+// Public Product Routes (No protection)
 app.use("/api/pr", pr);
 
-// Admin Product Routes
+// Protected Admin Product Routes
 app.use(
   "/api/products",
   protect,
@@ -62,12 +69,13 @@ app.use(
   productRoutes
 );
 
+// Functional Routes
 app.use("/api/coupons", couponsRoutes);
 app.use("/api/payment", payment);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reviews", reviewRoutes);
 
-// Admin Routes
+// General Admin Routes
 app.use(
   "/api/admin",
   protect,
@@ -75,7 +83,7 @@ app.use(
   adminRoutes
 );
 
-// Server
+// Start Server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
