@@ -81,11 +81,14 @@ const Home = ({ user }) => {
               >
                 <div className="aspect-[4/2.8] bg-red-50 flex items-center justify-center overflow-hidden">
                   {imageUrl(featured.image) ? (
-                    <img
-                      src={imageUrl(featured.image)}
-                      alt={featured.name}
-                      className="w-full h-full object-cover"
-                    />
+                   <img
+  src={featured.image}
+  alt={featured.name}
+  className="w-full h-full object-cover"
+  onError={(e) => {
+    e.target.style.display = "none";
+  }}
+/>
                   ) : (
                     <span className="text-gray-400 text-4xl">🍗</span>
                   )}

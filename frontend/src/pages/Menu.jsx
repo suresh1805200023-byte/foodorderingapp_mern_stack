@@ -4,8 +4,12 @@ import axios from "axios";
 import { useCart } from "../context/CartContext.jsx";
 
 const imageUrl = (img) => {
-  if (!img) return null;
-  if (img.startsWith("http")) return img;
+  if (!img) return "";
+
+  if (typeof img === "string" && img.startsWith("http")) {
+    return img;
+  }
+
   return `/uploads/${img}`;
 };
 
@@ -72,212 +76,99 @@ export default function Menu() {
 
   const scrollToCategory = (cat) => {
     setActiveCategory(cat);
-    const id = `cat-${slugify(cat)}`;
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
+    const el = document.getElementById(`cat-${slugify(cat)}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
+
       {/* HEADER */}
       <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white">
         <div className="max-w-7xl mx-auto px-4 py-12">
-          <h1 className="text-4xl md:text-5xl font-black uppercase">
-            Browse Menu
-          </h1>
-          <p className="mt-3 text-white/90 text-lg">
-            Fresh crispy meals prepared for you
-          </p>
+          <h1 className="text-4xl font-black uppercase">Browse Menu</h1>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex gap-8">
-          {/* SIDEBAR */}
-          <aside className="hidden lg:block w-72 shrink-0">
-            <div className="sticky top-24 bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="p-5 border-b border-gray-100">
-                <h2 className="text-xl font-black text-gray-900 uppercase">
-                  Categories
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">Explore our menu</p>
-              </div>
-              <div className="p-3 max-h-[calc(100vh-140px)] overflow-y-auto">
-                {grouped.categories.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => scrollToCategory(cat)}
-                    className={`w-full text-left px-4 py-3 rounded-2xl mb-2 font-semibold transition-all ${
-                      activeCategory === cat
-                        ? "bg-red-50 text-red-600 border border-red-100"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </aside>
+      <div className="max-w-7xl mx-auto px-4 py-8 flex gap-8">
 
-          {/* CONTENT */}
-          <main className="flex-1">
-            {/* MOBILE CATEGORY SELECT */}
-            <div className="lg:hidden mb-6">
-              <select
-                value={activeCategory}
-                onChange={(e) => scrollToCategory(e.target.value)}
-                className="w-full border border-gray-300 rounded-2xl px-4 py-3 bg-white shadow-sm"
+        {/* SIDEBAR */}
+        <aside className="hidden lg:block w-72">
+          <div className="bg-white rounded-3xl p-4">
+            {grouped.categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => scrollToCategory(cat)}
+                className="w-full text-left p-3 rounded-xl hover:bg-gray-100"
               >
-                {grouped.categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
+                {cat}
+              </button>
+            ))}
+          </div>
+        </aside>
 
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="bg-white rounded-3xl overflow-hidden shadow animate-pulse"
-                  >
-                    <div className="h-56 bg-gray-200"></div>
-                    <div className="p-5 space-y-3">
-                      <div className="h-4 bg-gray-200 rounded"></div>
-                      <div className="h-4 bg-gray-100 rounded w-2/3"></div>
-                      <div className="h-10 bg-gray-100 rounded"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : error ? (
-              <div className="bg-red-50 border border-red-200 text-red-600 rounded-2xl p-5">
-                {error}
-              </div>
-            ) : grouped.categories.length === 0 ? (
-              <div className="bg-white rounded-3xl p-12 text-center shadow-sm">
-                <div className="text-7xl mb-5">🍗</div>
-                <h3 className="text-2xl font-bold text-gray-800">
-                  No Menu Available
-                </h3>
-                <p className="text-gray-500 mt-2">
-                  Delicious meals coming soon.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-14">
-                {grouped.categories.map((cat) => {
-                  const items = grouped.byCategory.get(cat) || [];
-                  return (
-                    <section
-                      key={cat}
-                      id={`cat-${slugify(cat)}`}
-                      className="scroll-mt-24"
-                    >
-                      <div className="flex items-center justify-between mb-6">
-                        <div>
-                          <h2 className="text-3xl font-black text-gray-900 uppercase">
-                            {cat}
-                          </h2>
-                          <div className="w-20 h-1 bg-red-500 rounded-full mt-2"></div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            window.scrollTo({ top: 0, behavior: "smooth" })
-                          }
-                          className="text-sm text-gray-500 hover:text-red-500 font-medium"
-                        >
-                          Back to top
-                        </button>
-                      </div>
+        {/* CONTENT */}
+        <main className="flex-1">
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {items.map((p) => {
-                          const price = Number(p?.price) || 0;
-                          const discount = Number(p?.discount) || 0;
-                          const after = priceAfterDiscount(p);
+          {loading ? (
+            <p>Loading...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : (
+            <div className="space-y-12">
 
-                          return (
-                            <div
-                              key={p._id}
-                              className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition duration-500 border border-gray-100"
-                            >
-                              <Link
-                                to={`/product/${p._id}`}
-                                className="block overflow-hidden"
-                              >
-                                {imageUrl(p.image) ? (
-                                  <img
-                                    src={imageUrl(p.image)}
-                                    alt={p.name}
-                                    className="w-full h-64 object-cover group-hover:scale-110 transition duration-700"
-                                  />
-                                ) : (
-                                  <div className="w-full h-64 flex items-center justify-center bg-gray-100 text-7xl">
-                                    🍗
-                                  </div>
-                                )}
-                              </Link>
+              {grouped.categories.map((cat) => (
+                <section key={cat} id={`cat-${slugify(cat)}`}>
+                  <h2 className="text-2xl font-bold mb-4">{cat}</h2>
 
-                              <div className="p-5">
-                                <p className="text-xs font-black text-red-600 uppercase tracking-widest">
-                                  {p.category || "Menu"}
-                                </p>
-                                <Link to={`/product/${p._id}`}>
-                                  <h3 className="text-xl font-bold text-gray-900 mt-2 line-clamp-1">
-                                    {p.name}
-                                  </h3>
-                                </Link>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
 
-                                {p.description && (
-                                  <p className="text-gray-500 text-sm mt-2 line-clamp-2 leading-relaxed">
-                                    {p.description}
-                                  </p>
-                                )}
+                    {(grouped.byCategory.get(cat) || []).map((p) => (
+                      <div key={p._id} className="bg-white rounded-2xl shadow overflow-hidden">
 
-                                <div className="mt-5 flex items-center justify-between">
-                                  <div>
-                                    {discount > 0 && (
-                                      <span className="text-gray-400 text-sm line-through mr-2">
-                                        ₹{price}
-                                      </span>
-                                    )}
-                                    <span className="text-2xl font-black text-gray-900">
-                                      ₹{Math.round(after)}
-                                    </span>
-                                  </div>
+                        <Link to={`/product/${p._id}`}>
 
-                                  <button
-                                    type="button"
-                                    onClick={() => addToCart(p, 1)}
-                                    className="w-11 h-11 rounded-2xl bg-gray-900 text-white hover:bg-red-600 transition flex items-center justify-center text-xl font-bold active:scale-95"
-                                    aria-label="Add to cart"
-                                  >
-                                    +
-                                  </button>
-                                </div>
-                              </div>
+                          {imageUrl(p.image) ? (
+                            <img
+                              src={imageUrl(p.image)}
+                              alt={p.name}
+                              className="h-64 w-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <div className="h-64 flex items-center justify-center text-6xl">
+                              🍗
                             </div>
-                          );
-                        })}
+                          )}
+
+                        </Link>
+
+                        <div className="p-4">
+                          <h3 className="font-bold">{p.name}</h3>
+                          <p>₹{Math.round(priceAfterDiscount(p))}</p>
+
+                          <button
+                            onClick={() => addToCart(p, 1)}
+                            className="mt-3 w-full bg-black text-white py-2 rounded-lg"
+                          >
+                            Add
+                          </button>
+                        </div>
+
                       </div>
-                    </section>
-                  );
-                })}
-              </div>
-            )}
-          </main>
-        </div>
+                    ))}
+
+                  </div>
+                </section>
+              ))}
+
+            </div>
+          )}
+
+        </main>
+
       </div>
     </div>
   );

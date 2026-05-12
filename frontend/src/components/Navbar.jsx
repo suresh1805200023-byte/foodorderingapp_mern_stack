@@ -4,8 +4,6 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { Avatar } from "antd";
 import { useCart } from "../context/CartContext.jsx";
 
-import logo from "../assets/logo1.jpg"; // IMPORT LOGO
-
 const Navbar = ({ user }) => {
   const { cartCount } = useCart();
 
@@ -17,10 +15,17 @@ const Navbar = ({ user }) => {
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
+
+          {/* ✅ FIXED IMAGE (PRODUCTION SAFE) */}
           <img
-            src={logo}
+            src="/logo1.jpg"
             alt="GoldenChicken Logo"
             className="w-20 h-20 rounded-full object-cover"
+            loading="lazy"
+            onError={(e) => {
+              e.target.src =
+                "https://via.placeholder.com/80?text=GC";
+            }}
           />
 
           <h1 className="text-3xl font-bold text-red-500 hover:text-red-600">
@@ -31,8 +36,6 @@ const Navbar = ({ user }) => {
         <Link to="/Menu" className="hover:text-red-500">
           Menu
         </Link>
-
-        
 
         {user?.role === "admin" && (
           <Link to="/admin" className="hover:text-red-500 font-medium">
