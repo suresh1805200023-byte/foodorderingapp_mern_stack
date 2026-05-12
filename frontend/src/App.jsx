@@ -26,76 +26,62 @@ import Coupons from "./pages/Coupons.jsx";
 
 import Notfound from "./components/Notfound.jsx";
 
-const App = () => {
+// Backend URL
+axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 
+// Send cookies/token
+axios.defaults.withCredentials = true;
+
+const App = () => {
   const [user, setUser] = useState(() => {
     const token = localStorage.getItem("token");
     return token ? { token } : null;
   });
 
   const refreshUser = useCallback(async () => {
-
     const token = localStorage.getItem("token");
 
     if (!token) return;
 
     try {
-
-      const { data } = await axios.get(
-        "/api/users/me",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const { data } = await axios.get("/api/users/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       setUser({
         ...data,
         token,
       });
-
     } catch {
-
       localStorage.removeItem("token");
       setUser(null);
-
     }
-
   }, []);
 
   useEffect(() => {
-
     if (!user?.token || user.role) return;
 
     refreshUser();
-
-  }, [user?.token]);
+  }, [user?.token, user?.role, refreshUser]);
 
   return (
-
     <CartProvider>
-
       <Router>
-
         {/* NAVBAR */}
         <Navbar user={user} />
 
         {/* ROUTES */}
         <Routes>
-
           <Route
-            path="/Register"
-            element={
-              <Register setUser={setUser} />
-            }
+            path="/register"
+            element={<Register setUser={setUser} />}
           />
 
           <Route
             path="/login"
-            element={
-              <Login setUser={setUser} />
-            }
+            element={<Login setUser={setUser} />}
           />
 
           <Route
@@ -109,15 +95,13 @@ const App = () => {
           />
 
           <Route
-            path="/Menu"
+            path="/menu"
             element={<Menu />}
           />
 
           <Route
             path="/coupons"
-            element={
-              <Coupons user={user} />
-            }
+            element={<Coupons user={user} />}
           />
 
           <Route
@@ -132,16 +116,12 @@ const App = () => {
 
           <Route
             path="/cart"
-            element={
-              <Cart user={user} />
-            }
+            element={<Cart user={user} />}
           />
 
           <Route
             path="/order-success"
-            element={
-              <OrderSuccess user={user} />
-            }
+            element={<OrderSuccess user={user} />}
           />
 
           <Route
@@ -169,16 +149,12 @@ const App = () => {
             path="*"
             element={<Notfound />}
           />
-
         </Routes>
 
         {/* FOOTER */}
         <Footer />
-
       </Router>
-
     </CartProvider>
-
   );
 };
 

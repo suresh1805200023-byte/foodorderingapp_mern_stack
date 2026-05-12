@@ -14,27 +14,61 @@ import orderRoutes from './routes/order.js';
 import reviewRoutes from './routes/review.js';
 import adminRoutes from "./routes/Admin.js";
 import couponsRoutes from "./routes/coupons.js";
+
 const PORT = process.env.PORT || 5000;
 
 const app = express();
 
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Database
 connectDB();
-app.use(cors());
+
+// CORS
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  })
+);
+
+// Static Folder
+app.use("/uploads", express.static("uploads"));
+
+// Test Route
+app.get("/", (req, res) => {
+  res.send("Backend Running ✅");
+});
 
 // Routes
 app.use("/api/users", authRoutes);
-app.use('/api/products', protect, verifyAdmin, productRoutes);
-app.use("/uploads",express.static('uploads'));
-app.use('/api/pr',pr);
-app.use("/api/coupons", couponsRoutes);
-app.use('/api/payment',payment);
-app.use('/api/orders', orderRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use("/api/admin", protect, verifyAdmin, adminRoutes);
 
+// Public Product Routes
+app.use("/api/pr", pr);
+
+// Admin Product Routes
+app.use(
+  "/api/products",
+  protect,
+  verifyAdmin,
+  productRoutes
+);
+
+app.use("/api/coupons", couponsRoutes);
+app.use("/api/payment", payment);
+app.use("/api/orders", orderRoutes);
+app.use("/api/reviews", reviewRoutes);
+
+app.use(
+  "/api/admin",
+  protect,
+  verifyAdmin,
+  adminRoutes
+);
+
+// Server
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
