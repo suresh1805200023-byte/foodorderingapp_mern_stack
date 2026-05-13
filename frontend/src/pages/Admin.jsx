@@ -121,7 +121,7 @@ function DashboardStats() {
       <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
         <h3 className="font-semibold text-gray-800 mb-4">Overview</h3>
         <p className="text-gray-500 text-sm">
-          This dashboard is now connected to your backend. Next step is adding charts (daily revenue / orders).
+          
         </p>
       </div>
     </div>
