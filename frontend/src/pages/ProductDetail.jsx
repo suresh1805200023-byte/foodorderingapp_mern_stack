@@ -7,10 +7,16 @@ const getAuthHeader = () => ({
   Authorization: `Bearer ${localStorage.getItem("token")}`,
 });
 
+/* ================= IMAGE FIX (PRODUCTION SAFE) ================= */
 const imageUrl = (img) => {
   if (!img) return null;
-  if (img.startsWith("http")) return img;
-  return `/uploads/${img}`;
+
+  if (typeof img === "string" && img.startsWith("http")) {
+    return img;
+  }
+
+  const baseURL = import.meta.env.VITE_API_URL || "";
+  return `${baseURL}/uploads/${img}`;
 };
 
 const ProductDetail = ({ user, refreshUser }) => {
@@ -25,7 +31,6 @@ const ProductDetail = ({ user, refreshUser }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
-  // ================= FETCH PRODUCT =================
   useEffect(() => {
     if (!id) return;
 
@@ -38,7 +43,6 @@ const ProductDetail = ({ user, refreshUser }) => {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // ================= SYNC FAVORITES =================
   useEffect(() => {
     if (!user || !product) return;
 
@@ -46,7 +50,6 @@ const ProductDetail = ({ user, refreshUser }) => {
     setIsFavorite(favs.some((f) => String(f) === String(product._id)));
   }, [user, product]);
 
-  // ================= PRICE =================
   const priceData = useMemo(() => {
     const price = Number(product?.price) || 0;
     const discount = Number(product?.discount) || 0;
@@ -62,7 +65,6 @@ const ProductDetail = ({ user, refreshUser }) => {
     };
   }, [product]);
 
-  // ================= LOADING =================
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500">
@@ -71,7 +73,6 @@ const ProductDetail = ({ user, refreshUser }) => {
     );
   }
 
-  // ================= NOT FOUND =================
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500">
@@ -83,25 +84,29 @@ const ProductDetail = ({ user, refreshUser }) => {
     );
   }
 
-  // ================= UI =================
+  const imgSrc = imageUrl(product.image);
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
 
-        {/* BACK */}
         <Link to="/" className="text-red-500 hover:underline mb-6 inline-block">
           ← Back to menu
         </Link>
 
-        <div className="bg-white rounded-2xl shadow border border-gray-200 overflow-hidden flex flex-col md:flex-row">
+        <div className="bg-white rounded-2xl shadow border overflow-hidden flex flex-col md:flex-row">
 
           {/* IMAGE */}
           <div className="md:w-1/2 bg-gray-100 flex items-center justify-center">
-            {imageUrl(product.image) ? (
+            {imgSrc ? (
               <img
-                src={imageUrl(product.image)}
+                src={imgSrc}
                 alt={product.name}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "/placeholder.png";
+                }}
               />
             ) : (
               <div className="text-6xl">🍗</div>
@@ -111,7 +116,7 @@ const ProductDetail = ({ user, refreshUser }) => {
           {/* DETAILS */}
           <div className="p-6 md:p-8 flex-1">
 
-            <span className="text-sm font-semibold text-red-600 uppercase tracking-wide">
+            <span className="text-sm font-semibold text-red-600 uppercase">
               {product.category || "Menu"}
             </span>
 
@@ -146,58 +151,50 @@ const ProductDetail = ({ user, refreshUser }) => {
 
             {/* FAVORITE */}
             {user && (
-              <div className="mt-4">
-                <button
-                  type="button"
-                  disabled={favoriteLoading}
-                  onClick={async () => {
-                    setFavoriteLoading(true);
-                    try {
-                      if (isFavorite) {
-                        await axios.delete(
-                          `/api/users/me/favorites/${product._id}`,
-                          { headers: getAuthHeader() }
-                        );
-                        setIsFavorite(false);
-                      } else {
-                        await axios.post(
-                          "/api/users/me/favorites",
-                          { productId: product._id },
-                          { headers: getAuthHeader() }
-                        );
-                        setIsFavorite(true);
-                      }
-
-                      refreshUser?.();
-                    } finally {
-                      setFavoriteLoading(false);
+              <button
+                disabled={favoriteLoading}
+                onClick={async () => {
+                  setFavoriteLoading(true);
+                  try {
+                    if (isFavorite) {
+                      await axios.delete(
+                        `/api/users/me/favorites/${product._id}`,
+                        { headers: getAuthHeader() }
+                      );
+                      setIsFavorite(false);
+                    } else {
+                      await axios.post(
+                        "/api/users/me/favorites",
+                        { productId: product._id },
+                        { headers: getAuthHeader() }
+                      );
+                      setIsFavorite(true);
                     }
-                  }}
-                  className="text-sm font-medium text-gray-600 hover:text-red-500 disabled:opacity-50"
-                >
-                  {isFavorite ? "♥ Remove from favorites" : "♡ Add to favorites"}
-                </button>
-              </div>
+
+                    refreshUser?.();
+                  } finally {
+                    setFavoriteLoading(false);
+                  }
+                }}
+                className="mt-4 text-sm text-gray-600 hover:text-red-500"
+              >
+                {isFavorite ? "♥ Remove from favorites" : "♡ Add to favorites"}
+              </button>
             )}
 
             {/* ADD TO CART */}
             {product.available !== false ? (
               <div className="mt-6 flex items-center gap-4">
 
-                {/* QTY */}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() =>
-                      setQuantity((q) => Math.max(1, q - 1))
-                    }
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     className="w-10 h-10 border rounded-full"
                   >
                     −
                   </button>
 
-                  <span className="w-10 text-center">
-                    {quantity}
-                  </span>
+                  <span className="w-10 text-center">{quantity}</span>
 
                   <button
                     onClick={() => setQuantity((q) => q + 1)}
@@ -207,7 +204,6 @@ const ProductDetail = ({ user, refreshUser }) => {
                   </button>
                 </div>
 
-                {/* ADD BUTTON */}
                 <button
                   onClick={() => {
                     addToCart(product, quantity);
@@ -220,19 +216,14 @@ const ProductDetail = ({ user, refreshUser }) => {
                 </button>
 
                 {added && (
-                  <Link
-                    to="/cart"
-                    className="text-red-500 hover:underline"
-                  >
+                  <Link to="/cart" className="text-red-500">
                     View cart →
                   </Link>
                 )}
 
               </div>
             ) : (
-              <p className="mt-4 text-gray-500">
-                Currently unavailable
-              </p>
+              <p className="mt-4 text-gray-500">Currently unavailable</p>
             )}
 
           </div>

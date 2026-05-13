@@ -17,11 +17,21 @@ const Home = ({ user }) => {
       .finally(() => setLoading(false));
   }, []);
 
-  const imageUrl = (img) => (img ? `/uploads/${img}` : null);
+  // ✅ FIXED IMAGE HANDLER (LOCAL + RENDER SAFE)
+  const imageUrl = (img) => {
+    if (!img) return null;
 
-  const availableProducts = products.filter(
-    (p) => p.available !== false
-  );
+    // already full URL (Render / Cloudinary)
+    if (img.startsWith("http")) return img;
+
+    // fallback to backend URL
+    const baseURL =
+      import.meta.env.VITE_API_URL || ""; // IMPORTANT for Render
+
+    return `${baseURL}/uploads/${img}`;
+  };
+
+  const availableProducts = products.filter((p) => p.available !== false);
 
   const featured = availableProducts[0];
   const gridProducts = availableProducts.slice(1);
@@ -51,8 +61,6 @@ const Home = ({ user }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      
-      {/* PRODUCTS SECTION */}
       <div className="max-w-6xl mx-auto px-4 py-10">
 
         <div className="flex items-center gap-4 mb-8">
@@ -63,17 +71,13 @@ const Home = ({ user }) => {
         </div>
 
         {loading ? (
-          <p className="text-gray-500">
-            Loading deliciousness...
-          </p>
+          <p className="text-gray-500">Loading deliciousness...</p>
         ) : availableProducts.length === 0 ? (
-          <p className="text-gray-500">
-            No menu items yet. Check back later.
-          </p>
+          <p className="text-gray-500">No menu items yet. Check back later.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
 
-            {/* FEATURED PRODUCT */}
+            {/* FEATURED */}
             {featured && (
               <Link
                 to={`/product/${featured._id}`}
@@ -81,14 +85,15 @@ const Home = ({ user }) => {
               >
                 <div className="aspect-[4/2.8] bg-red-50 flex items-center justify-center overflow-hidden">
                   {imageUrl(featured.image) ? (
-                   <img
-  src={featured.image}
-  alt={featured.name}
-  className="w-full h-full object-cover"
-  onError={(e) => {
-    e.target.style.display = "none";
-  }}
-/>
+                    <img
+                      src={imageUrl(featured.image)}
+                      alt={featured.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/placeholder.png";
+                      }}
+                    />
                   ) : (
                     <span className="text-gray-400 text-4xl">🍗</span>
                   )}
@@ -98,47 +103,36 @@ const Home = ({ user }) => {
                   <span className="text-xs font-black text-red-600 uppercase tracking-widest">
                     {featured.category || "Featured"}
                   </span>
+
                   <h3 className="text-lg font-bold text-gray-900 mt-1">
                     {featured.name}
                   </h3>
+
                   {featured.description && (
-                    <p className="text-gray-500 text-sm mt-2 line-clamp-2 leading-relaxed">
+                    <p className="text-gray-500 text-sm mt-2 line-clamp-2">
                       {featured.description}
                     </p>
                   )}
+
                   <div className="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between">
                     {priceDisplay(featured)}
+
                     <button
-                      type="button"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         addToCart(featured, 1);
                       }}
-                      className="p-2 bg-gray-900 text-white rounded-lg hover:bg-red-600 transition-colors"
-                      aria-label="Add to cart"
+                      className="p-2 bg-gray-900 text-white rounded-lg hover:bg-red-600"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
+                      +
                     </button>
                   </div>
                 </div>
               </Link>
             )}
 
-            {/* GRID PRODUCTS */}
+            {/* GRID */}
             {gridProducts.map((p) => (
               <Link
                 key={p._id}
@@ -151,6 +145,10 @@ const Home = ({ user }) => {
                       src={imageUrl(p.image)}
                       alt={p.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/placeholder.png";
+                      }}
                     />
                   ) : (
                     <span className="text-gray-400 text-4xl">🍔</span>
@@ -161,39 +159,29 @@ const Home = ({ user }) => {
                   <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">
                     {p.category || "Menu"}
                   </span>
+
                   <h3 className="text-base font-bold text-gray-900 mt-1">
                     {p.name}
                   </h3>
+
                   <div className="mt-auto pt-3 flex items-center justify-between">
                     {priceDisplay(p)}
+
                     <button
-                      type="button"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         addToCart(p, 1);
                       }}
-                      className="p-2 bg-gray-900 text-white rounded-lg hover:bg-red-600 transition-colors"
+                      className="p-2 bg-gray-900 text-white rounded-lg hover:bg-red-600"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
+                      +
                     </button>
                   </div>
                 </div>
               </Link>
             ))}
+
           </div>
         )}
       </div>

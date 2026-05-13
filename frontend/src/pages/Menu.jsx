@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { useCart } from "../context/CartContext.jsx";
 
+/* ================= IMAGE FIX (PRODUCTION SAFE) ================= */
 const imageUrl = (img) => {
   if (!img) return "";
 
@@ -10,7 +11,8 @@ const imageUrl = (img) => {
     return img;
   }
 
-  return `/uploads/${img}`;
+  const baseURL = import.meta.env.VITE_API_URL || "";
+  return `${baseURL}/uploads/${img}`;
 };
 
 const slugify = (s) =>
@@ -56,10 +58,7 @@ export default function Menu() {
       a.localeCompare(b)
     );
 
-    return {
-      categories,
-      byCategory: map,
-    };
+    return { categories, byCategory: map };
   }, [products]);
 
   useEffect(() => {
@@ -124,7 +123,10 @@ export default function Menu() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
 
                     {(grouped.byCategory.get(cat) || []).map((p) => (
-                      <div key={p._id} className="bg-white rounded-2xl shadow overflow-hidden">
+                      <div
+                        key={p._id}
+                        className="bg-white rounded-2xl shadow overflow-hidden"
+                      >
 
                         <Link to={`/product/${p._id}`}>
 
@@ -134,7 +136,8 @@ export default function Menu() {
                               alt={p.name}
                               className="h-64 w-full object-cover"
                               onError={(e) => {
-                                e.target.style.display = "none";
+                                e.target.onerror = null;
+                                e.target.src = "/placeholder.png";
                               }}
                             />
                           ) : (

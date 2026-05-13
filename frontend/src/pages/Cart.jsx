@@ -1,9 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useCart } from "../context/CartContext.jsx";
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements, CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import {
+  Elements,
+  CardElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
 
 const getAuthHeader = () => ({
   Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -18,20 +23,32 @@ const initialAddress = {
   saveAddress: false,
 };
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
+const stripePromise = loadStripe(
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ""
+);
 
-/* ================= IMAGE FIX ================= */
+/* ================= IMAGE FIX (PRODUCTION SAFE) ================= */
 const imageUrl = (img) => {
   if (!img) return null;
 
+  // already full URL (Cloudinary / Render / external)
   if (img.startsWith("http")) return img;
 
-  // fallback for local uploads
-  return `/uploads/${img}`;
+  // backend base URL (IMPORTANT FOR RENDER)
+  const baseURL = import.meta.env.VITE_API_URL || "";
+
+  return `${baseURL}/uploads/${img}`;
 };
 
 /* ================= PAYMENT FORM ================= */
-function CheckoutCardForm({ cart, address, setError, setLoading, loading, onSuccess }) {
+function CheckoutCardForm({
+  cart,
+  address,
+  setError,
+  setLoading,
+  loading,
+  onSuccess,
+}) {
   const stripe = useStripe();
   const elements = useElements();
 
@@ -122,11 +139,12 @@ function CheckoutCardForm({ cart, address, setError, setLoading, loading, onSucc
 }
 
 /* ================= CART PAGE ================= */
-export default function Cart({ user }) {
+export default function Cart() {
   const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, cartCount } =
     useCart();
 
   const navigate = useNavigate();
+
   const [step, setStep] = useState(1);
   const [address, setAddress] = useState(initialAddress);
   const [loading, setLoading] = useState(false);
@@ -150,9 +168,11 @@ export default function Cart({ user }) {
             {/* CART ITEMS */}
             <div className="bg-white rounded shadow mb-6">
               {cart.map((item) => (
-                <div key={item.productId} className="flex items-center p-4 border-b">
-
-                  {/* ✅ FIXED IMAGE */}
+                <div
+                  key={item.productId}
+                  className="flex items-center p-4 border-b"
+                >
+                  {/* IMAGE FIX */}
                   <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden">
                     {imageUrl(item.image) ? (
                       <img
@@ -160,6 +180,7 @@ export default function Cart({ user }) {
                         alt={item.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
+                          e.target.onerror = null;
                           e.target.src = "/placeholder.png";
                         }}
                       />
@@ -176,9 +197,13 @@ export default function Cart({ user }) {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button onClick={() => updateQuantity(item.productId, -1)}>-</button>
+                    <button onClick={() => updateQuantity(item.productId, -1)}>
+                      -
+                    </button>
                     <span>{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.productId, 1)}>+</button>
+                    <button onClick={() => updateQuantity(item.productId, 1)}>
+                      +
+                    </button>
                   </div>
 
                   <button
@@ -196,7 +221,7 @@ export default function Cart({ user }) {
               <p className="text-lg font-bold">Total: ₹{cartTotal}</p>
             </div>
 
-            {/* STEP 2 */}
+            {/* PAYMENT STEP */}
             {step === 2 && (
               <div className="bg-white p-4 rounded shadow">
                 <h2 className="font-bold mb-3">Payment</h2>
