@@ -3,6 +3,7 @@ import { UserOutlined } from "@ant-design/icons";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { Avatar } from "antd";
 import { useCart } from "../context/CartContext.jsx";
+import logo from "../assets/logo1.jpg";
 
 const Navbar = ({ user }) => {
   const { cartCount } = useCart();
@@ -18,7 +19,7 @@ const Navbar = ({ user }) => {
 
           {/* ✅ FIXED IMAGE (PRODUCTION SAFE) */}
           <img
-            src="/logo1.jpg"
+            src={logo}
             alt="GoldenChicken Logo"
             className="w-20 h-20 rounded-full object-cover"
             loading="lazy"
